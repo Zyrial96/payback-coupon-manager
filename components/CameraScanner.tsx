@@ -36,8 +36,10 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
           const cameraId = devices[0].id;
           setSelectedCamera(cameraId);
           
-          // Initialize scanner with the ref
-          scannerRef.current = new Html5Qrcode(readerRef.current!);
+          // Initialize scanner with element ID
+          const elementId = 'camera-scanner-reader-' + Date.now();
+          readerRef.current!.id = elementId;
+          scannerRef.current = new Html5Qrcode(elementId);
           
           await scannerRef.current.start(
             cameraId,
