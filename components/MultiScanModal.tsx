@@ -193,7 +193,7 @@ export function MultiScanModal({ existingCoupons, onAddCoupons, onClose }: Multi
                           </div>
                           <div>
                             <p className="font-semibold text-sm">{coupon.title}</p>
-                            <p className="text-xs text-apple-gray-500">{coupon.type}</p>
+                            <p className="text-xs text-apple-gray-500">{coupon.store}</p>
                           </div>
                         </div>
                       </button>
