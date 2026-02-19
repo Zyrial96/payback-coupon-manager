@@ -107,7 +107,8 @@ export function MultiScanModal({ existingCoupons, onAddCoupons, onClose }: Multi
       description: '',
       barcode: s.barcode,
       barcodeType: 'CODE128',
-      type: 'other',
+      store: 'other',
+      discountType: 'percent',
       validFrom: new Date().toISOString().split('T')[0],
       validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days
       used: false,
