@@ -14,7 +14,7 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   const [errorMsg, setErrorMsg] = useState('');
   const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const containerId = useRef('qr-scanner-' + Date.now()).current;
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
@@ -27,70 +27,75 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
     }
   }, []);
 
-  const startScanner = async () => {
-    try {
-      setStep('loading');
-      
-      // Check if element exists
-      const element = document.getElementById(containerId);
-      if (!element) {
-        console.error('Container not found:', containerId);
-        setErrorMsg('Scanner-Container nicht gefunden');
-        setStep('error');
-        return;
-      }
-
-      console.log('Starting scanner with container:', containerId);
-      
-      // Get cameras first
-      const devices = await Html5Qrcode.getCameras();
-      console.log('Found cameras:', devices);
-      
-      if (!devices || devices.length === 0) {
-        setErrorMsg('Keine Kamera gefunden');
-        setStep('error');
-        return;
-      }
-
-      setCameras(devices);
-
-      // Create scanner
-      scannerRef.current = new Html5Qrcode(containerId);
-      
-      // Start with first camera
-      await scannerRef.current.start(
-        devices[0].id,
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-        },
-        (decodedText) => {
-          console.log('QR Code found:', decodedText);
-          stopScanner();
-          onScan(decodedText);
-          onClose();
-        },
-        (errorMessage) => {
-          // Ignore continuous errors
-        }
-      );
-      
-      console.log('Scanner started successfully');
-      setStep('scanning');
-      
-    } catch (err: any) {
-      console.error('Scanner error:', err);
-      setErrorMsg('Fehler: ' + (err.message || 'Unbekannter Fehler'));
-      setStep('error');
+  // Start scanner when ref is ready and we're in scanning state
+  useEffect(() => {
+    if (step !== 'scanning' || !containerRef.current || scannerRef.current) {
+      return;
     }
-  };
+
+    const initScanner = async () => {
+      try {
+        console.log('Initializing scanner...');
+        
+        // Get cameras
+        const devices = await Html5Qrcode.getCameras();
+        console.log('Found cameras:', devices);
+        
+        if (!devices || devices.length === 0) {
+          setErrorMsg('Keine Kamera gefunden');
+          setStep('error');
+          return;
+        }
+
+        setCameras(devices);
+
+        // Create unique ID
+        const elementId = 'qr-reader-' + Date.now();
+        containerRef.current!.id = elementId;
+
+        // Create scanner
+        scannerRef.current = new Html5Qrcode(elementId);
+        
+        // Start with first camera
+        await scannerRef.current.start(
+          devices[0].id,
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+          },
+          (decodedText) => {
+            console.log('QR Code found:', decodedText);
+            stopScanner();
+            onScan(decodedText);
+            onClose();
+          },
+          (errorMessage) => {
+            // Ignore continuous scanning errors
+          }
+        );
+        
+        console.log('Scanner started successfully');
+      } catch (err: any) {
+        console.error('Scanner init error:', err);
+        setErrorMsg('Scanner konnte nicht starten: ' + (err.message || 'Unbekannter Fehler'));
+        setStep('error');
+      }
+    };
+
+    initScanner();
+  }, [step, onScan, onClose, stopScanner]);
 
   const handlePermission = async () => {
     try {
-      // Request camera permission explicitly
-      await navigator.mediaDevices.getUserMedia({ video: true });
-      await startScanner();
+      setStep('loading');
+      
+      // Request camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop());
+      
+      // Now switch to scanning state - useEffect will handle the rest
+      setStep('scanning');
     } catch (err: any) {
       console.error('Permission error:', err);
       setErrorMsg('Kamera-Zugriff verweigert. Bitte erlaube den Zugriff in den Einstellungen.');
@@ -99,10 +104,10 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   };
 
   const switchCamera = async (cameraId: string) => {
-    await stopScanner();
+    if (!scannerRef.current) return;
+    
     try {
-      setStep('loading');
-      scannerRef.current = new Html5Qrcode(containerId);
+      await scannerRef.current.stop();
       await scannerRef.current.start(
         cameraId,
         { fps: 10, qrbox: { width: 250, height: 250 } },
@@ -113,13 +118,13 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
         },
         () => {}
       );
-      setStep('scanning');
     } catch (err: any) {
       setErrorMsg('Kamera-Wechsel fehlgeschlagen: ' + err.message);
       setStep('error');
     }
   };
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopScanner();
@@ -183,7 +188,7 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
           {step === 'loading' && (
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-12 h-12 text-payback-red animate-spin mb-4" />
-              <p className="text-apple-gray-600">Kamera wird gestartet...</p>
+              <p className="text-apple-gray-600">Berechtigung wird geprüft...</p>
             </div>
           )}
 
@@ -204,9 +209,11 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             </div>
           )}
 
-          {step === 'scanning' && (
+          {/* Scanner Container - Always rendered when not in permission/loading/error state */}
+          {(step === 'scanning' || step === 'loading') && (
             <>
-              {cameras.length > 1 && (
+              {/* Camera selector */}
+              {cameras.length > 1 && step === 'scanning' && (
                 <div className="mb-4">
                   <select
                     onChange={(e) => switchCamera(e.target.value)}
@@ -221,31 +228,35 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
                 </div>
               )}
 
-              {/* Scanner Container - IMPORTANT: No overflow hidden, explicit dimensions */}
+              {/* Video Container */}
               <div 
-                id={containerId}
-                className="relative bg-black rounded-2xl"
+                ref={containerRef}
+                className="relative bg-black rounded-2xl overflow-hidden"
                 style={{ 
                   width: '100%', 
-                  height: '350px',
-                  minHeight: '350px'
+                  height: step === 'scanning' ? '350px' : '0px',
+                  minHeight: step === 'scanning' ? '350px' : '0px'
                 }}
               >
-                {/* Overlay with scan frame */}
-                <div className="absolute inset-0 pointer-events-none z-10">
-                  <div className="absolute inset-0 border-2 border-white/30 rounded-2xl" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-payback-red rounded-lg">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 border-t-4 border-l-4 border-payback-red rounded-tl-lg" />
-                    <div className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 w-8 h-8 border-t-4 border-r-4 border-payback-red rounded-tr-lg" />
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-8 h-8 border-b-4 border-l-4 border-payback-red rounded-bl-lg" />
-                    <div className="absolute bottom-0 right-1/2 translate-x-1/2 translate-y-1/2 w-8 h-8 border-b-4 border-r-4 border-payback-red rounded-br-lg" />
+                {/* Overlay - only show when scanning */}
+                {step === 'scanning' && (
+                  <div className="absolute inset-0 pointer-events-none z-10">
+                    <div className="absolute inset-0 border-2 border-white/30 rounded-2xl" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-payback-red rounded-lg">
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 border-t-4 border-l-4 border-payback-red rounded-tl-lg" />
+                      <div className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 w-8 h-8 border-t-4 border-r-4 border-payback-red rounded-tr-lg" />
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-8 h-8 border-b-4 border-l-4 border-payback-red rounded-bl-lg" />
+                      <div className="absolute bottom-0 right-1/2 translate-x-1/2 translate-y-1/2 w-8 h-8 border-b-4 border-r-4 border-payback-red rounded-br-lg" />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              <p className="text-center text-sm text-apple-gray-500 mt-4">
-                Halte den Barcode in den roten Rahmen
-              </p>
+              {step === 'scanning' && (
+                <p className="text-center text-sm text-apple-gray-500 mt-4">
+                  Halte den Barcode in den roten Rahmen
+                </p>
+              )}
             </>
           )}
         </div>
