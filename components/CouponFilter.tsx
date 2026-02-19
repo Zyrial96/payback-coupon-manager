@@ -1,11 +1,11 @@
 'use client';
 
-import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { CouponType } from '@/types/coupon';
+import { Search, SlidersHorizontal, X, Store } from 'lucide-react';
+import { CouponType, STORE_NAMES } from '@/types/coupon';
 
 export interface FilterOptions {
   search: string;
-  type: CouponType | 'all';
+  store: CouponType | 'all';
   status: 'all' | 'active' | 'expired' | 'used';
   sortBy: 'date' | 'expiry' | 'name';
 }
@@ -64,23 +64,24 @@ export function CouponFilter({ filters, onFilterChange, showFilters, onToggleFil
       {/* Filter Panel */}
       {showFilters && (
         <div className="apple-card p-4 animate-slide-up">
-          {/* Type Filter */}
+          {/* Store Filter */}
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-apple-gray-500 uppercase tracking-wider mb-2">
-              Typ
+            <label className="flex items-center gap-1 text-xs font-semibold text-apple-gray-500 uppercase tracking-wider mb-2">
+              <Store className="w-3 h-3" />
+              Geschäft
             </label>
             <div className="flex flex-wrap gap-2">
-              {(['all', 'payback', 'dm', 'rossmann', 'other'] as const).map((type) => (
+              {(['all', 'dm', 'rossmann', 'rewe', 'penny', 'lidl', 'kaufland', 'mueller', 'payback', 'other'] as const).map((store) => (
                 <button
-                  key={type}
-                  onClick={() => onFilterChange({ ...filters, type })}
+                  key={store}
+                  onClick={() => onFilterChange({ ...filters, store })}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    filters.type === type
-                      ? 'bg-apple-gray-900 text-white'
+                    filters.store === store
+                      ? 'bg-payback-red text-white'
                       : 'bg-apple-gray-100 text-apple-gray-600 hover:bg-apple-gray-200'
                   }`}
                 >
-                  {type === 'all' ? 'Alle' : type === 'dm' ? 'DM' : type.charAt(0).toUpperCase() + type.slice(1)}
+                  {store === 'all' ? 'Alle' : STORE_NAMES[store] || store}
                 </button>
               ))}
             </div>
@@ -144,9 +145,9 @@ export function applyFilters(coupons: any[], filters: FilterOptions): any[] {
     );
   }
 
-  // Type filter
-  if (filters.type !== 'all') {
-    result = result.filter(c => c.type === filters.type);
+  // Store filter
+  if (filters.store !== 'all') {
+    result = result.filter(c => c.store === filters.store);
   }
 
   // Status filter

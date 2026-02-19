@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Barcode, Calendar, Trash2, Heart, Share2, CheckCircle, MoreVertical, Wallet } from 'lucide-react';
-import { Coupon } from '@/types/coupon';
+import { Barcode, Calendar, Trash2, Heart, Share2, CheckCircle, MoreVertical, Wallet, Store, Tag } from 'lucide-react';
+import { Coupon, STORE_NAMES, DISCOUNT_NAMES } from '@/types/coupon';
 import { format, differenceInDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -30,24 +30,51 @@ export function CouponCard({
   const isExpired = new Date(coupon.validUntil) < new Date();
   const daysLeft = differenceInDays(new Date(coupon.validUntil), new Date());
   
-  const getTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      payback: 'Payback',
-      dm: 'DM',
-      rossmann: 'Rossmann',
-      other: 'Sonstiges',
-    };
-    return labels[type] || type;
-  };
-
-  const getTypeGradient = (type: string) => {
+  const getStoreGradient = (store: string) => {
     const gradients: Record<string, string> = {
       payback: 'from-red-500 to-red-600',
       dm: 'from-yellow-400 to-yellow-500',
-      rossmann: 'from-blue-400 to-blue-500',
+      rossmann: 'from-blue-500 to-blue-600',
+      rewe: 'from-red-600 to-red-700',
+      penny: 'from-red-500 to-red-600',
+      lidl: 'from-yellow-500 to-yellow-600',
+      aldi: 'from-blue-400 to-blue-500',
+      kaufland: 'from-orange-600 to-orange-700',
+      mueller: 'from-orange-500 to-orange-600',
+      budni: 'from-green-500 to-green-600',
       other: 'from-gray-400 to-gray-500',
     };
-    return gradients[type] || gradients.other;
+    return gradients[store] || gradients.other;
+  };
+
+  const getStoreBadgeColor = (store: string) => {
+    const colors: Record<string, string> = {
+      payback: 'bg-red-100 text-red-700 border-red-200',
+      dm: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      rossmann: 'bg-blue-100 text-blue-700 border-blue-200',
+      rewe: 'bg-red-100 text-red-700 border-red-200',
+      penny: 'bg-red-100 text-red-700 border-red-200',
+      lidl: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      aldi: 'bg-blue-100 text-blue-700 border-blue-200',
+      kaufland: 'bg-orange-100 text-orange-700 border-orange-200',
+      mueller: 'bg-orange-100 text-orange-700 border-orange-200',
+      budni: 'bg-green-100 text-green-700 border-green-200',
+      other: 'bg-gray-100 text-gray-700 border-gray-200',
+    };
+    return colors[store] || colors.other;
+  };
+
+  const formatDiscount = () => {
+    if (coupon.discountValue) {
+      if (coupon.discountType === 'percent') {
+        return `${coupon.discountValue}%`;
+      } else if (coupon.discountType === 'fixed') {
+        return `${coupon.discountValue.toFixed(2).replace('.', ',')}€`;
+      } else if (coupon.discountType === 'points') {
+        return `${coupon.discountValue}x`;
+      }
+    }
+    return DISCOUNT_NAMES[coupon.discountType] || '';
   };
 
   const getDaysLeftColor = (days: number) => {
@@ -74,9 +101,9 @@ export function CouponCard({
     } ${coupon.used ? 'opacity-60' : ''}`}>
       <div className="flex items-start gap-3">
         {/* Icon */}
-        <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${getTypeGradient(coupon.type)} flex items-center justify-center shadow-lg`}>
+        <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${getStoreGradient(coupon.store)} flex items-center justify-center shadow-lg`}>
           <span className="text-white font-bold text-lg">
-            {getTypeLabel(coupon.type).charAt(0)}
+            {STORE_NAMES[coupon.store]?.charAt(0) || coupon.store.charAt(0)}
           </span>
         </div>
 
@@ -85,9 +112,14 @@ export function CouponCard({
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-gradient-to-r ${getTypeGradient(coupon.type)} text-white`}>
-                  {getTypeLabel(coupon.type)}
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-gradient-to-r ${getStoreGradient(coupon.store)} text-white`}>
+                  {STORE_NAMES[coupon.store] || coupon.store}
                 </span>
+                {coupon.discountType && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-payback-red/10 text-payback-red border border-payback-red/20">
+                    {formatDiscount()}
+                  </span>
+                )}
                 {coupon.isFavorite && (
                   <Heart className="w-4 h-4 text-purple-500 fill-purple-500" />
                 )}

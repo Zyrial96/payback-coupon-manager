@@ -34,7 +34,7 @@ export default function Home() {
   
   const [filters, setFilters] = useState<FilterOptions>({
     search: '',
-    type: 'all',
+    store: 'all',
     status: 'active',
     sortBy: 'expiry',
   });
@@ -43,7 +43,14 @@ export default function Home() {
     setMounted(true);
     const saved = localStorage.getItem('payback-coupons');
     if (saved) {
-      setCoupons(JSON.parse(saved));
+      const parsed = JSON.parse(saved);
+      // Migration: altes 'type' Feld zu neuem 'store' und 'discountType'
+      const migrated = parsed.map((c: any) => ({
+        ...c,
+        store: c.store || c.type || 'other',
+        discountType: c.discountType || 'percent',
+      }));
+      setCoupons(migrated);
     }
     
     // Load dark mode preference
