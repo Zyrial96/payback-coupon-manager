@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { TrendingUp, Wallet, Calendar, BarChart3, PieChart } from 'lucide-react';
-import { Coupon } from '@/types/coupon';
+import { Coupon, STORE_NAMES } from '@/types/coupon';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -38,9 +38,9 @@ export function Statistics({ coupons }: StatisticsProps) {
       });
     }
     
-    // Type distribution
-    const typeDistribution = coupons.reduce((acc, c) => {
-      acc[c.type] = (acc[c.type] || 0) + 1;
+    // Store distribution
+    const storeDistribution = coupons.reduce((acc, c) => {
+      acc[c.store] = (acc[c.store] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
@@ -56,25 +56,23 @@ export function Statistics({ coupons }: StatisticsProps) {
       expiredCount: expiredCoupons.length,
       totalCount: coupons.length,
       monthlyData,
-      typeDistribution,
+      storeDistribution,
       avgSavings,
     };
   }, [coupons]);
 
   const maxMonthly = Math.max(...stats.monthlyData.map(d => d.saved), 1);
 
-  const typeColors: Record<string, string> = {
+  const storeColors: Record<string, string> = {
     payback: 'bg-red-500',
     dm: 'bg-yellow-400',
     rossmann: 'bg-blue-500',
+    rewe: 'bg-red-600',
+    penny: 'bg-red-500',
+    lidl: 'bg-yellow-500',
+    kaufland: 'bg-orange-600',
+    mueller: 'bg-orange-500',
     other: 'bg-gray-500',
-  };
-
-  const typeLabels: Record<string, string> = {
-    payback: 'Payback',
-    dm: 'DM',
-    rossmann: 'Rossmann',
-    other: 'Sonstige',
   };
 
   return (
@@ -139,23 +137,23 @@ export function Statistics({ coupons }: StatisticsProps) {
         </div>
       </div>
 
-      {/* Type Distribution */}
+      {/* Store Distribution */}
       <div className="apple-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <PieChart className="w-5 h-5 text-apple-gray-600" />
-          <h3 className="font-bold text-apple-gray-900">Coupon-Verteilung</h3>
+          <h3 className="font-bold text-apple-gray-900">Geschäfts-Verteilung</h3>
         </div>
         
         <div className="space-y-3">
-          {Object.entries(stats.typeDistribution).map(([type, count]) => {
+          {Object.entries(stats.storeDistribution).map(([store, count]) => {
             const percentage = (count / stats.totalCount) * 100;
             return (
-              <div key={type} className="flex items-center gap-3">
-                <div className={`w-3 h-3 rounded-full ${typeColors[type] || 'bg-gray-400'}`} />
-                <span className="text-sm font-medium w-20">{typeLabels[type] || type}</span>
+              <div key={store} className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${storeColors[store] || 'bg-gray-400'}`} />
+                <span className="text-sm font-medium w-20">{STORE_NAMES[store] || store}</span>
                 <div className="flex-1 h-2 bg-apple-gray-100 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${typeColors[type] || 'bg-gray-400'} rounded-full transition-all`}
+                  <div
+                    className={`h-full ${storeColors[store] || 'bg-gray-400'} rounded-full transition-all`}
                     style={{ width: `${percentage}%` }}
                   />
                 </div>

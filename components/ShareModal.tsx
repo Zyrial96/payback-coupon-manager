@@ -27,7 +27,9 @@ export function ShareModal({ coupon, onClose }: ShareModalProps) {
       title: coupon.title,
       description: coupon.description,
       barcode: coupon.barcode,
-      type: coupon.type,
+      store: coupon.store,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
       validUntil: coupon.validUntil,
     })
   )}`;

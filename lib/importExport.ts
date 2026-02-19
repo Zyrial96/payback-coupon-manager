@@ -1,4 +1,4 @@
-import { Coupon } from '@/types/coupon';
+import { Coupon, STORE_NAMES } from '@/types/coupon';
 
 export interface ExportData {
   version: string;
@@ -8,7 +8,7 @@ export interface ExportData {
 
 export function exportToJSON(coupons: Coupon[]): string {
   const data: ExportData = {
-    version: '1.0',
+    version: '2.0',
     exportDate: new Date().toISOString(),
     coupons,
   };
@@ -17,13 +17,14 @@ export function exportToJSON(coupons: Coupon[]): string {
 }
 
 export function exportToCSV(coupons: Coupon[]): string {
-  const headers = ['Titel', 'Beschreibung', 'Barcode', 'Typ', 'Gültig bis', 'Genutzt'];
+  const headers = ['Titel', 'Beschreibung', 'Barcode', 'Geschäft', 'Rabatt', 'Gültig bis', 'Genutzt'];
   
   const rows = coupons.map(c => [
     `"${c.title}"`,
     `"${c.description || ''}"`,
     `"${c.barcode}"`,
-    c.type,
+    `"${STORE_NAMES[c.store] || c.store}"`,
+    `"${c.discountType || ''}"`,
     c.validUntil,
     c.used ? 'Ja' : 'Nein',
   ]);
@@ -51,18 +52,21 @@ export function importFromJSON(jsonString: string): { success: boolean; coupons?
       return { success: false, error: 'Ungültiges Format: Keine Coupons gefunden' };
     }
     
-    // Validate coupon structure
+    // Validate and migrate coupon structure
     const validCoupons = data.coupons.filter(c => 
       c.title && c.barcode && c.validUntil
-    );
+    ).map(c => ({
+      ...c,
+      // Migration: altes 'type' zu neuem 'store' und 'discountType'
+      store: c.store || (c as any).type || 'other',
+      discountType: c.discountType || 'percent',
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    }));
     
     return { 
       success: true, 
-      coupons: validCoupons.map(c => ({
-        ...c,
-        id: crypto.randomUUID(), // Generate new IDs
-        createdAt: new Date().toISOString(),
-      }))
+      coupons: validCoupons
     };
   } catch (error) {
     return { success: false, error: 'Fehler beim Parsen der JSON-Datei' };
@@ -87,9 +91,10 @@ export function importFromCSV(csvString: string): { success: boolean; coupons?: 
         title: values[0] || '',
         description: values[1] || '',
         barcode: values[2] || '',
-        type: (values[3] as any) || 'other',
-        validUntil: values[4] || new Date().toISOString().split('T')[0],
-        used: values[5] === 'Ja',
+        store: (values[3] as any) || 'other',
+        discountType: 'percent',
+        validUntil: values[5] || new Date().toISOString().split('T')[0],
+        used: values[6] === 'Ja',
         barcodeType: 'CODE128',
         validFrom: new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString(),
