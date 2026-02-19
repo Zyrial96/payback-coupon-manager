@@ -336,12 +336,12 @@ export default function Home() {
               <Sparkles className="w-10 h-10 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-apple-gray-900 dark:text-white mb-1">
-              {filters.search || filters.type !== 'all' || filters.status !== 'all'
+              {filters.search || filters.store !== 'all' || filters.status !== 'all'
                 ? 'Keine Coupons gefunden'
                 : 'Noch keine Coupons'}
             </h3>
             <p className="text-apple-gray-500 dark:text-gray-400 text-sm mb-4">
-              {filters.search || filters.type !== 'all' || filters.status !== 'all'
+              {filters.search || filters.store !== 'all' || filters.status !== 'all'
                 ? 'Versuche andere Filter-Einstellungen'
                 : 'Füge deinen ersten Coupon hinzu'}
             </p>
