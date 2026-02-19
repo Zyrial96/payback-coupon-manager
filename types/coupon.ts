@@ -10,5 +10,21 @@ export interface Coupon {
   validFrom: string;
   validUntil: string;
   used: boolean;
+  usedAt?: string; // Wann wurde der Coupon eingelöst
+  usedAmount?: number; // Wie viel wurde gespart
   createdAt: string;
+  // Neue Felder
+  value?: number; // Wert in € (für Statistiken)
+  isFavorite?: boolean; // Angepinnt
+  category?: string; // Kategorie/Ordner
+  notes?: string; // Notizen
+}
+
+// Für Multi-Coupon Modus
+export interface CouponStack {
+  id: string;
+  name: string;
+  coupons: Coupon[];
+  createdAt: string;
+  combinedBarcode: string;
 }
