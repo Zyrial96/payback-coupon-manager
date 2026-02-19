@@ -139,7 +139,7 @@ export function ShareModal({ coupon, onClose }: ShareModalProps) {
                 </button>
               </div>
 
-              {navigator.share && (
+              {typeof navigator.share !== 'undefined' && (
                 <button
                   onClick={shareViaWebShare}
                   className="w-full apple-button-primary bg-green-500 hover:bg-green-600"
