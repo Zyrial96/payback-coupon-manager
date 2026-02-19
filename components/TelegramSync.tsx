@@ -85,7 +85,7 @@ export function TelegramSync({ onImport, apiUrl, apiKey }: TelegramSyncProps) {
           const newIds = new Set(importedIds);
           data.coupons.forEach((c: any) => newIds.add(c.id));
           setImportedIds(newIds);
-          localStorage.setItem('telegram-sync-ids', JSON.stringify([...newIds]));
+          localStorage.setItem('telegram-sync-ids', JSON.stringify(Array.from(newIds)));
           
           // Save last sync
           const now = new Date();
