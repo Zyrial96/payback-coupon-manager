@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { TrendingUp, Wallet, Calendar, BarChart3, PieChart } from 'lucide-react';
-import { Coupon, STORE_NAMES } from '@/types/coupon';
+import { Coupon, STORE_NAMES, CouponType } from '@/types/coupon';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -150,7 +150,7 @@ export function Statistics({ coupons }: StatisticsProps) {
             return (
               <div key={store} className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${storeColors[store] || 'bg-gray-400'}`} />
-                <span className="text-sm font-medium w-20">{STORE_NAMES[store] || store}</span>
+                <span className="text-sm font-medium w-20">{STORE_NAMES[store as CouponType] || store}</span>
                 <div className="flex-1 h-2 bg-apple-gray-100 rounded-full overflow-hidden">
                   <div
                     className={`h-full ${storeColors[store] || 'bg-gray-400'} rounded-full transition-all`}
