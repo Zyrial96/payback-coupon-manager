@@ -94,9 +94,14 @@ export function BarcodeDisplay({ coupon, onClose }: BarcodeDisplayProps) {
       payback: 'from-red-500 to-red-600',
       dm: 'from-yellow-400 to-yellow-500',
       rossmann: 'from-blue-500 to-blue-600',
+      rewe: 'from-red-600 to-red-700',
+      penny: 'from-red-500 to-red-600',
+      lidl: 'from-yellow-500 to-yellow-600',
+      kaufland: 'from-orange-600 to-orange-700',
+      mueller: 'from-orange-500 to-orange-600',
       other: 'from-gray-500 to-gray-600',
     };
-    return colors[coupon.type] || colors.other;
+    return colors[coupon.store] || colors.other;
   };
 
   const increaseBrightness = () => {
