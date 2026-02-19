@@ -19,6 +19,17 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   useEffect(() => {
     const initScanner = async () => {
       try {
+        // Wait for DOM element to exist
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Check if element exists
+        const readerElement = document.getElementById('reader');
+        if (!readerElement) {
+          setError('Scanner-Element nicht gefunden');
+          setIsLoading(false);
+          return;
+        }
+        
         // Get available cameras
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
