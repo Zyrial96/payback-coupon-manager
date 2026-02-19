@@ -1,3 +1,179 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-screen;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+}
+
+@layer components {
+  /* Apple-Style Cards */
+  .apple-card {
+    @apply bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .apple-card:hover {
+    @apply shadow-[0_8px_40px_rgb(0,0,0,0.08)] -translate-y-0.5;
+  }
+  
+  /* Glassmorphism Effect */
+  .glass {
+    @apply bg-white/70 backdrop-blur-2xl border border-white/40;
+  }
+  
+  .glass-dark {
+    @apply bg-black/5 backdrop-blur-2xl border border-white/10;
+  }
+  
+  /* Apple-Style Button */
+  .apple-button {
+    @apply relative overflow-hidden rounded-full font-medium;
+    @apply transition-all duration-200 ease-out;
+    @apply active:scale-95 active:shadow-inner;
+  }
+  
+  .apple-button-primary {
+    @apply apple-button bg-apple-blue text-white px-6 py-3;
+    @apply shadow-[0_4px_14px_rgba(0,122,255,0.39)];
+    @apply hover:shadow-[0_6px_20px_rgba(0,122,255,0.23)];
+  }
+  
+  .apple-button-secondary {
+    @apply apple-button bg-apple-gray-100 text-apple-gray-900 px-6 py-3;
+    @apply hover:bg-apple-gray-200;
+  }
+  
+  /* Smooth Input */
+  .apple-input {
+    @apply bg-apple-gray-50 border border-apple-gray-200 rounded-2xl px-4 py-3;
+    @apply focus:outline-none focus:ring-2 focus:ring-apple-blue/20 focus:border-apple-blue;
+    @apply transition-all duration-200;
+  }
+  
+  /* Animated Badge */
+  .badge-pulse {
+    @apply relative;
+  }
+  
+  .badge-pulse::after {
+    content: '';
+    @apply absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-apple-red rounded-full;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(1.1);
+    }
+  }
+  
+  /* Floating Animation */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  /* Shimmer Loading Effect */
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+  
+  .shimmer::before {
+    content: '';
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-apple-gray-300 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-apple-gray-400;
+  }
+}
+
+/* Page Transition */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Modal Animation */
+.modal-backdrop {
+  @apply fixed inset-0 bg-black/40 backdrop-blur-sm;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Barcode Scan Line Animation */
+.scan-line {
+  @apply absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-apple-green to-transparent;
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  0% {
+    top: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
