@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, Camera, Scan, Loader2 } from 'lucide-react';
+import { X, Camera, Scan, Loader2, RefreshCw } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 interface CameraScannerProps {
@@ -11,36 +11,36 @@ interface CameraScannerProps {
 
 export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const readerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
+    // Wait for ref to be set
+    if (!readerRef.current) {
+      return;
+    }
+
     const initScanner = async () => {
       try {
-        // Wait for DOM element to exist
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Check if element exists
-        const readerElement = document.getElementById('reader');
-        if (!readerElement) {
-          setError('Scanner-Element nicht gefunden');
-          setIsLoading(false);
-          return;
-        }
+        setIsLoading(true);
+        setError(null);
         
         // Get available cameras
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
           setCameras(devices);
-          setSelectedCamera(devices[0].id);
+          const cameraId = devices[0].id;
+          setSelectedCamera(cameraId);
           
-          // Initialize scanner
-          scannerRef.current = new Html5Qrcode('reader');
+          // Initialize scanner with the ref
+          scannerRef.current = new Html5Qrcode(readerRef.current!);
           
           await scannerRef.current.start(
-            devices[0].id,
+            cameraId,
             {
               fps: 10,
               qrbox: { width: 250, height: 250 },
@@ -53,30 +53,34 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
             },
             (errorMessage) => {
               // Error callback (ignore continuous scanning errors)
-              console.log(errorMessage);
+              // Only log, don't show to user
             }
           );
           
           setIsLoading(false);
         } else {
-          setError('Keine Kamera gefunden');
+          setError('Keine Kamera gefunden. Bitte stelle sicher, dass dein Gerät eine Kamera hat.');
           setIsLoading(false);
         }
       } catch (err) {
         console.error('Scanner error:', err);
-        setError('Kamera-Zugriff verweigert oder nicht verfügbar');
+        setError('Kamera-Zugriff verweigert oder nicht verfügbar. Bitte erlaube Kamera-Zugriff in den Einstellungen.');
         setIsLoading(false);
       }
     };
 
-    initScanner();
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      initScanner();
+    }, 300);
 
     return () => {
+      clearTimeout(timer);
       if (scannerRef.current) {
         scannerRef.current.stop().catch(console.error);
       }
     };
-  }, [onScan, onClose]);
+  }, [onScan, onClose, retryCount]); // retryCount dependency allows restart
 
   const switchCamera = async (cameraId: string) => {
     if (!scannerRef.current) return;
@@ -103,6 +107,10 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
       setError('Kamera-Wechsel fehlgeschlagen');
       setIsLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
   };
 
   return (
@@ -146,13 +154,22 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
                 <Camera className="w-8 h-8 text-red-500" />
               </div>
               <p className="text-apple-gray-900 font-semibold mb-2">Fehler</p>
-              <p className="text-apple-gray-500 text-sm">{error}</p>
-              <button
-                onClick={onClose}
-                className="mt-4 apple-button-secondary text-sm"
-              >
-                Schließen
-              </button>
+              <p className="text-apple-gray-500 text-sm mb-4">{error}</p>
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={handleRetry}
+                  className="apple-button-primary text-sm flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Erneut versuchen
+                </button>
+                <button
+                  onClick={onClose}
+                  className="apple-button-secondary text-sm"
+                >
+                  Schließen
+                </button>
+              </div>
             </div>
           ) : (
             <>
@@ -173,9 +190,9 @@ export function CameraScanner({ onScan, onClose }: CameraScannerProps) {
                 </div>
               )}
 
-              {/* Scanner */}
+              {/* Scanner - Using ref instead of id */}
               <div className="relative rounded-2xl overflow-hidden bg-black">
-                <div id="reader" className="w-full aspect-square" />
+                <div ref={readerRef} className="w-full aspect-square" />
                 
                 {/* Overlay */}
                 <div className="absolute inset-0 pointer-events-none">
