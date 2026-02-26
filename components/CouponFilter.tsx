@@ -132,7 +132,8 @@ export function CouponFilter({ filters, onFilterChange, showFilters, onToggleFil
   );
 }
 
-export function applyFilters(coupons: any[], filters: FilterOptions): any[] {
+export function applyFilters(coupons: any[], filters: FilterOptions, now?: Date): any[] {
+  const currentDate = now || new Date();
   let result = [...coupons];
 
   // Search
@@ -152,9 +153,8 @@ export function applyFilters(coupons: any[], filters: FilterOptions): any[] {
 
   // Status filter
   if (filters.status !== 'all') {
-    const now = new Date();
     result = result.filter(c => {
-      const isExpired = new Date(c.validUntil) < now;
+      const isExpired = new Date(c.validUntil) < currentDate;
       if (filters.status === 'active') return !c.used && !isExpired;
       if (filters.status === 'expired') return isExpired;
       if (filters.status === 'used') return c.used;

@@ -31,6 +31,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
   
   const [filters, setFilters] = useState<FilterOptions>({
     search: '',
@@ -41,6 +42,7 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
+    setCurrentDate(new Date());
     const saved = localStorage.getItem('payback-coupons');
     if (saved) {
       const parsed = JSON.parse(saved);
@@ -158,7 +160,7 @@ export default function Home() {
     setCoupons([...coupons, ...importedCoupons]);
   };
 
-  const filteredCoupons = applyFilters(coupons, filters);
+  const filteredCoupons = mounted && currentDate ? applyFilters(coupons, filters, currentDate) : [];
   
   // Sort by favorite first, then by other criteria
   const sortedCoupons = [...filteredCoupons].sort((a, b) => {
@@ -167,8 +169,8 @@ export default function Home() {
     return 0;
   });
   
-  const activeCoupons = coupons.filter(c => !c.used && new Date(c.validUntil) >= new Date());
-  const expiredCoupons = coupons.filter(c => !c.used && new Date(c.validUntil) < new Date());
+  const activeCoupons = coupons.filter(c => !c.used && currentDate && new Date(c.validUntil) >= currentDate);
+  const expiredCoupons = coupons.filter(c => !c.used && currentDate && new Date(c.validUntil) < currentDate);
   const usedCoupons = coupons.filter(c => c.used);
 
   if (!mounted) return null;
